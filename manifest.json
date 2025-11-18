@@ -1,0 +1,13 @@
+{
+  "display_name": "Secondary API Assistant + Injector",
+  "loading_order": 1,
+  "requires": [],
+  "optional": [],
+  "dependencies": [],
+  "js": "index.js",
+  "css": "",
+  "author": "Your name",
+  "version": "1.0.0",
+  "homePage": "https://example.com",
+  "auto_update": false
+}
