@@ -87,6 +87,7 @@ function computeLastUserMessageSignature() {
 
 /**
  * 将副 API 的结果追加到最后一条用户消息的末尾，并持久化保存到聊天记录和 DOM。
+ * 追加后通过“模拟编辑→立即保存”触发 SillyTavern 的完整重渲染流程。
  * @param {string} result
  */
 function injectResultIntoLastUserMessage(result) {
@@ -145,16 +146,29 @@ function injectResultIntoLastUserMessage(result) {
             window.saveChat();
         }
 
-        // 同步更新 DOM，立即显示修改
+        // 触发一次“模拟编辑 → 立即完成编辑”，让 SillyTavern 重新解析 Markdown、高亮和样式
         try {
-            const messageElement = document.querySelector(
-                `#chat .mes[mesid="${targetIndex}"] .mes_text`
-            );
-            if (messageElement) {
-                messageElement.innerHTML = targetMessage.mes;
+            const messageRoot = document.querySelector(`#chat .mes[mesid="${targetIndex}"]`);
+            if (messageRoot) {
+                const editButton = messageRoot.querySelector('.mes_edit');
+                const doneButton = messageRoot.querySelector('.mes_edit_done');
+
+                if (editButton && doneButton) {
+                    editButton.click();
+                    setTimeout(() => {
+                        // 不修改编辑框内容，直接点击完成，触发原生的重渲染流程
+                        doneButton.click();
+                    }, 100);
+                } else {
+                    // 回退：如果找不到编辑按钮，就直接更新 .mes_text
+                    const textEl = messageRoot.querySelector('.mes_text');
+                    if (textEl) {
+                        textEl.innerHTML = targetMessage.mes;
+                    }
+                }
             }
         } catch (domError) {
-            console.warn('[Secondary API] Failed to update DOM for injected message:', domError);
+            console.warn('[Secondary API] Failed to re-render via edit simulation:', domError);
         }
 
         lastInjectedMessageIndex = targetIndex;
